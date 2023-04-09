@@ -21,8 +21,8 @@ export default component$(() => {
   const action = useAddUser();
   return (
     <>
-      <section>
-        <h1 class="p-4">Qwik Server forms</h1>
+      <section class="p-4">
+        <h1>Qwik Server forms</h1>
         <Form action={action} class="flex flex-col gap-2">
           <input name="name" class="w-96" placeholder="enter user name" />
           {action.value?.failed && <div>{action.value.fieldErrors?.name}</div>}
