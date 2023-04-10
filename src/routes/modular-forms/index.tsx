@@ -22,8 +22,9 @@ const formSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof formSchema>;
+type LoginResponse = { createdUserId: number };
 
-const getDataAfterXms = (data: unknown, ms: number): Promise<unknown> =>
+const getDataAfterXms = (data: any, ms: number): Promise<any> =>
   new Promise((res) => setTimeout(() => res(data), ms));
 
 export const useFormLoader = routeLoader$<InitialValues<LoginForm>>(() => ({
@@ -31,18 +32,22 @@ export const useFormLoader = routeLoader$<InitialValues<LoginForm>>(() => ({
   password: '',
 }));
 
-export const useFormAction = formAction$<LoginForm>(async ({ email }) => {
-  // Runs on server
-  const data = await getDataAfterXms(
-    { success: true, user: { email, id: Math.ceil(Math.random() * 1000) } },
-    2000
-  );
-  console.log(data);
-  return data;
-}, zodForm$(formSchema));
+export const useFormAction = formAction$<LoginForm, LoginResponse>(
+  async ({ email, password }) => {
+    // Runs on server
+    const createdUserID = await getDataAfterXms(db.users.add({ email }), 2000);
+    console.log(createdUserID);
+    return {
+      status: 'success',
+      message: 'User added successfully',
+      data: { createdUserID },
+    };
+  },
+  zodForm$(formSchema)
+);
 
 export default component$(() => {
-  const [loginForm, { Form, Field }] = useForm<LoginForm>({
+  const [loginForm, { Form, Field }] = useForm<LoginForm, LoginResponse>({
     loader: useFormLoader(),
     validate: zodForm$(formSchema),
     action: useFormAction(),
@@ -55,52 +60,50 @@ export default component$(() => {
   });
 
   return (
-    <>
-      <section class="p-4">
-        <h1>Qwik Modular Forms</h1>
-        <Form onSubmit$={handleSubmit} class="flex flex-col gap-2">
-          <Field name="email">
-            {(field, props) => (
-              <>
-                <input
-                  class="w-96"
-                  placeholder="enter email"
-                  {...props}
-                  type="email"
-                />
-                {field.error && <div>{field.error}</div>}
-              </>
-            )}
-          </Field>
-          <Field name="password">
-            {(field, props) => (
-              <>
-                <input
-                  class={'w-96'}
-                  placeholder="enter password"
-                  {...props}
-                  type="password"
-                />
-                {field.error && <div>{field.error}</div>}
-              </>
-            )}
-          </Field>
-          <button disabled={loginForm.submitting} class="w-max" type="submit">
-            {loginForm.submitting ? 'submitting...' : 'Login'}
-          </button>
-        </Form>
-        {loginForm.response.data && (
-          <code>{JSON.stringify(loginForm.response)}</code>
-        )}
-      </section>
-    </>
+    <section class="p-4">
+      <h1>Qwik Modular Forms</h1>
+      <Form onSubmit$={handleSubmit} class="flex flex-col gap-2">
+        <Field name="email">
+          {(field, props) => (
+            <>
+              <input
+                class="w-96"
+                placeholder="enter email"
+                {...props}
+                type="email"
+              />
+              {field.error && <div>{field.error}</div>}
+            </>
+          )}
+        </Field>
+        <Field name="password">
+          {(field, props) => (
+            <>
+              <input
+                class={'w-96'}
+                placeholder="enter password"
+                {...props}
+                type="password"
+              />
+              {field.error && <div>{field.error}</div>}
+            </>
+          )}
+        </Field>
+        <button disabled={loginForm.submitting} class="w-max" type="submit">
+          {loginForm.submitting ? 'submitting...' : 'Login'}
+        </button>
+      </Form>
+      {loginForm.response.data && (
+        <code>{JSON.stringify(loginForm.response.data)}</code>
+      )}
+    </section>
   );
 });
 
 // This is just to simulate a database
 const db = {
   users: {
-    add: (user: { name: string }) => {
+    add: (user: { email: string }) => {
       console.log(user);
       const userID = Math.floor(Math.random() * 1000);
       return userID;
