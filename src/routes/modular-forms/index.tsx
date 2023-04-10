@@ -13,7 +13,7 @@ import {
 const formSchema = z.object({
   email: z
     .string()
-    .min(1, 'please enter your email')
+    .nonempty('please enter your email')
     .email('enter a valid email'),
   password: z
     .string()
@@ -22,7 +22,7 @@ const formSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof formSchema>;
-type LoginResponse = { createdUserId: number };
+type LoginResponse = { createdUserID: number };
 
 const getDataAfterXms = (data: any, ms: number): Promise<any> =>
   new Promise((res) => setTimeout(() => res(data), ms));
@@ -93,8 +93,11 @@ export default component$(() => {
           {loginForm.submitting ? 'submitting...' : 'Login'}
         </button>
       </Form>
-      {loginForm.response.data && (
-        <code>{JSON.stringify(loginForm.response.data)}</code>
+      {loginForm.response.status === 'success' && (
+        <p>
+          Successfully created user in DB with ID:{' '}
+          {loginForm.response.data?.createdUserID}
+        </p>
       )}
     </section>
   );
